@@ -26,7 +26,7 @@
       </van-swipe>
     </div>
     <good-item describe="每日热销指南"
-        moreLink="/more/1"
+        moreLink="/more/hotSell"
         title="热销榜">
       <ul class="hot-ul">
         <li :key="item.id"
@@ -35,15 +35,13 @@
             v-for="item in hotGoods">
           <img :src="item.imageUrl"
               alt="">
-          <div class="sale-title">
-            <span class="sale-name">{{item.name}}</span>
-            <span class="sale-price">￥{{item.salePrice}}</span>
-          </div>
+          <div class="sale-name">{{item.name}}</div>
+          <div class="sale-price">{{item.salePrice | money}}</div>
         </li>
       </ul>
     </good-item>
     <good-item describe="前所未有的折扣"
-        moreLink="/more/1"
+        moreLink="/more/saleSell"
         title="低价促销">
       <ul class="sale-ul">
         <li :key="item.id"
@@ -58,11 +56,11 @@
           </div>
           <div class="price">
             <span class="new-price">
-              ￥{{item.salePrice}}
+              {{item.salePrice| money}}
             </span>
             <span class="old-price">
           <del>
-            ￥{{item.price}}
+            {{item.price | money}}
           </del>
         </span>
           </div>
@@ -101,7 +99,7 @@
         <van-tab :key="item.id"
             :title="item.title"
             v-for="item in classifyGoods">
-          <tabItem :data="item.data" @showGood="showGood"></tabItem>
+          <tab-item :data="item.data" @showGood="showGood"></tab-item>
         </van-tab>
       </van-tabs>
     </div>
@@ -114,8 +112,6 @@
   import goodItem from "~/components/goodItem";
   import backgroundImg from "~/components/backgroundImg";
   import tabItem from "~/components/tabItem";
-
-  const baseUrl = "http://127.0.0.1";
 
   export default {
     async asyncData({$axios, error, redirect}) {
@@ -133,10 +129,10 @@
           && discoverData.errorCode === 200
           && classifyGood.errorCode === 200) {
           return {
-            hotGoods: hotData.data,
-            saleGoods: saleData.data,
-            discoverGoods: discoverData.data,
-            classifyGoods: classifyGood.data
+            hotGoods: hotData.data || [],
+            saleGoods: saleData.data || [],
+            discoverGoods: discoverData.data || [],
+            classifyGoods: classifyGood.data || []
           };
         } else {
           handleServerError("", error, redirect);
@@ -150,10 +146,10 @@
         searchValue: "",
         indexPage: 1,
         images: [
-          {id: 1, url: baseUrl + "/images/shop/swipe/swipe-1.jpg"},
-          {id: 2, url: baseUrl + "/images/shop/swipe/swipe-2.jpg"},
-          {id: 3, url: baseUrl + "/images/shop/swipe/swipe-3.jpg"},
-          {id: 4, url: baseUrl + "/images/shop/swipe/swipe-4.jpg"}
+          {id: 1, url: this.baseUrl + "/images/shop/swipe/swipe-1.jpg"},
+          {id: 2, url: this.baseUrl + "/images/shop/swipe/swipe-2.jpg"},
+          {id: 3, url: this.baseUrl + "/images/shop/swipe/swipe-3.jpg"},
+          {id: 4, url: this.baseUrl + "/images/shop/swipe/swipe-4.jpg"}
         ]
       };
     },
@@ -165,12 +161,18 @@
       }
     },
     methods: {
-      showGood(bookId) {
-        console.log(bookId);
+      showGood(id) {
+        this.$router.push({
+          path: "/good/detail",
+          query: {
+            id
+          }
+        });
       },
       // 搜索
       onSearch() {
-        console.log("onSearch");
+        localStorage.setItem('search', this.searchValue);
+        this.$router.push('/search');
       },
       // 轮播图index
       changeSwipe(index) {
@@ -250,19 +252,21 @@
       width 25%
       overflow hidden
       padding 2px 4px
+      text-align center
 
       img {
         height 100px
       }
 
-      .sale-title {
-        text-align center
-        font-size 14px
+      .sale-name {
+        overflow hidden
+        text-overflow ellipsis
+        white-space nowrap
+      }
 
-        .sale-price {
-          color #ff4c0a
-          font-size 16px
-        }
+      .sale-price {
+        color #ff4c0a
+        font-size 16px
       }
     }
   }

@@ -98,7 +98,6 @@
             });
           }
         } catch (err) {
-          console.log(err);
           handleError(err, this.$router);
         }
       },

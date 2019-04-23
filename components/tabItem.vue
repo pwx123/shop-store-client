@@ -7,7 +7,7 @@
       <div class="item-detail">
         <img alt=""
             v-lazy="item.imageUrl">
-        <div class="desc">{{item.description}}</div>
+        <div class="desc" :title="item.name">{{item.name.length > 10 ? item.name.slice(0,10) + "...": item.name}}</div>
         <div class="price">
           <span class="new-price">￥{{item.salePrice}}</span>
           <span class="old-price">
@@ -15,6 +15,9 @@
           </span>
         </div>
       </div>
+    </div>
+    <div class="in-bottom">
+      到底啦 ~~
     </div>
   </div>
 </template>
@@ -29,7 +32,7 @@
     },
     methods: {
       showGood(id) {
-        this.$emit('showGood', id);
+        this.$emit("showGood", id);
       }
     }
   };
@@ -54,20 +57,23 @@
       .item-detail {
         background-color #fff
         margin 6px 0 0 6px
+        text-align center
 
         img {
-          width 100%
-          height 180px
+          height 160px
+          margin-top 6px
+        }
+
+        .price {
+          line-height 24px
+          text-align left
         }
 
         .desc {
-          height 36px
+          height 26px
           padding 4px
           font-size 14px
-          display -webkit-box
-          -webkit-box-orient vertical
-          -webkit-line-clamp 2
-          overflow hidden
+          text-align left
         }
 
         .new-price {
@@ -81,6 +87,14 @@
           margin-left 6px
         }
       }
+    }
+
+    .in-bottom {
+      width 100%
+      text-align center
+      color #666
+      font-size 14px
+      margin 10px 0
     }
   }
 </style>

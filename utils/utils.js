@@ -74,6 +74,7 @@ export function getDatePickerTime(num) {
 export function handleError(err, router) {
   let errMsg = "系统错误";
   if (err && err.response && err.response.status === 401) {
+    errMsg = err.response.data.errorMsg;
     Notify({
       message: errMsg,
       duration: 1500
