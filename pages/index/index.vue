@@ -116,7 +116,6 @@
   export default {
     async asyncData({$axios, error, redirect}) {
       try {
-        let data = await $axios.$post("/getPublicKey");
         let promiseArr = [
           $axios.$post("/book/getHotGood"),
           $axios.$post("/book/getSaleGood"),

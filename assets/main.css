@@ -1,14 +1,14 @@
-.page-leave-active,
-.page-enter-active {
-    transition: all 0.5s;
-}
+/*.page-leave-active,*/
+/*.page-enter-active {*/
+/*    transition: all 0.5s;*/
+/*}*/
 
-.page-enter {
-    opacity: 0;
-    transform: translateX(-30px);
-}
+/*.page-enter {*/
+/*    opacity: 0;*/
+/*    transform: translateX(-30px);*/
+/*}*/
 
-.page-leave-to {
-    opacity: 0;
-    transform: translateX(30px);
-}
+/*.page-leave-to {*/
+/*    opacity: 0;*/
+/*    transform: translateX(30px);*/
+/*}*/

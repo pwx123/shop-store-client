@@ -146,6 +146,12 @@
       },
       // 提交或确定删除
       async onSubmit() {
+        if (!this.checkedGood.length) {
+          this.$notify({
+            message: "请选择要操作的商品"
+          });
+          return false;
+        }
         if (this.isEdit) {
           try {
             let res = await this.$axios.$post("/cart/deleteCart", {ids: this.checkedGood.join(",")});
@@ -163,6 +169,10 @@
           } catch (err) {
             handleError(err, this.$router);
           }
+        } else {
+          localStorage.setItem("settlementList", JSON.stringify(this.checkedGood));
+          localStorage.setItem("isSettlement", 'true');
+          this.$router.push("/cart/settlement");
         }
       },
       reduceCount(good, count) {

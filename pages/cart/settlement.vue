@@ -6,14 +6,14 @@
         left-arrow
         left-text="返回"
         title="提交订单"></van-nav-bar>
-    <div class="address">
+    <nuxt-link class="address" tag="div" :to="'/address?id=' + (defaultAddress.id || '')">
       <div class="address-detail">
-        {{hasDefault ? "彭文祥" : "选择/添加收货地址"}}
+        {{hasDefault ? addressInfo.name : "选择/添加收货地址"}}
       </div>
-      <div class="address-info" v-if="hasDefault">山东省烟台市芝罘区鲁东大学</div>
+      <div class="address-info" v-if="hasDefault">{{addressInfo.addressDetail}}</div>
       <van-icon name="arrow"/>
       <van-icon name="location" v-if="hasDefault"/>
-    </div>
+    </nuxt-link>
     <van-panel title="商品">
       <van-card
           :key="item.id"
@@ -22,57 +22,128 @@
           :price="formatPrice(item.salePrice)"
           :thumb="item.imageUrl"
           :title="item.name"
-          v-for="item in orderList">
+          v-for="item in settlementList">
         <div class="desc" slot="desc">
           {{item.description.length > 32 ? item.description.slice(0,32) + "..." : item.description}}
         </div>
       </van-card>
     </van-panel>
+    <van-cell-group>
+      <van-cell :label="labelString"
+          :value="dealMoney ? '￥' + (dealMoney.toFixed(2)): '免运费'"
+          title="运费"/>
+      <van-field label="留言"
+          placeholder="点击给买家留言"
+          v-model="remark"/>
+      <van-cell :value="'￥' + (totalPrice.toFixed(2))"
+          style="color:#f44"
+          title="合计"/>
+    </van-cell-group>
+    <div class="order-footer">购物愉快~</div>
+    <van-submit-bar :price="totalPrice * 100"
+        @submit="onSubmit"
+        button-text="结算"/>
+    <loading :loading="loading"></loading>
   </div>
 </template>
 
 <script>
+  import {handleError} from "../../utils/utils";
+  import Loading from "../../components/loading";
+
   export default {
+    components: {Loading},
     data() {
       return {
-        hasDefault: true,
-        orderList: [{
-          "createdAt": "2019-04-23 17:04:06",
-          "id": 6,
-          "userId": 1,
-          "bookId": 172,
-          "count": 1,
-          "name": "深度成长",
-          "author": "科里•夏纳罕",
-          "press": "台海出版社",
-          "title": "颠覆思维模式，重新定义成功！",
-          "description": "全面发展不如深度成长，很多人没有取得成功，是因为努力的方向太多，忽略了深挖自身的核心价值！",
-          "price": 33,
-          "salePrice": 20,
-          "stock": 123,
-          "imageUrl": "http://127.0.0.1/images/book/172.jpg"
-        }, {
-          "createdAt": "2019-04-23 17:04:15",
-          "id": 7,
-          "userId": 1,
-          "bookId": 166,
-          "count": 1,
-          "name": "庆子绘本",
-          "author": "庆子·凯萨兹",
-          "press": "贵州人民出版社",
-          "title": "精选图画书大师庆子·凯萨兹的上乘之作",
-          "description": "包含母爱、自我认同、勇气等主题，荣获多项国际大奖。故事轻快诙谐，画面柔和明丽，语言短小精悍，蕴意深刻。孩子能在快乐的阅读体验中收获感动与成长。",
-          "price": 64,
-          "salePrice": 57,
-          "stock": 100,
-          "imageUrl": "http://127.0.0.1/images/book/166.jpg"
-        }]
+        remark: "",
+        labelString: "",
+        settlementList: [],
+        defaultAddress: {},
+        loading: true
       };
     },
+    computed: {
+      totalCartPrice() {
+        return this.settlementList.reduce((t, c) => {
+          return t + c.salePrice * c.count;
+        }, 0);
+      },
+      totalPrice() {
+        return this.totalCartPrice + this.dealMoney;
+      },
+      dealMoney() {
+        return this.totalCartPrice >= 150 ? 0 : 6;
+      },
+      addressInfo() {
+        return {
+          name: this.defaultAddress.name,
+          phone: this.defaultAddress.tel,
+          addressDetail: this.defaultAddress.provinceName + " " + this.defaultAddress.cityName + " "
+            + this.defaultAddress.countryName + " " + this.defaultAddress.detailAddress
+        };
+      },
+      hasDefault() {
+        return Object.keys(this.defaultAddress).length;
+      }
+    },
+    mounted() {
+      this.getSettlementList();
+    },
     methods: {
+      async getSettlementList() {
+        let settlementList = localStorage.getItem("settlementList");
+        let isSettlement = localStorage.getItem("isSettlement");
+        if (settlementList && Object.prototype.toString.apply(JSON.parse(settlementList)) === "[object Array]" && JSON.parse(settlementList).length) {
+          let arr = JSON.parse(settlementList);
+          if (isSettlement && JSON.parse(isSettlement)) {
+            this.getDefaultAddress();
+          } else {
+            let selectAddress = localStorage.getItem("selectAddress");
+            this.defaultAddress = JSON.parse(selectAddress);
+          }
+          try {
+            let res = await this.$axios.$post("/cart/getCartById", {ids: arr.join(",")});
+            this.loading = false;
+            if (res.errorCode === 200) {
+              this.settlementList = res.data;
+            } else {
+              this.$notify({
+                message: res.errorMsg
+              });
+            }
+          } catch (err) {
+            handleError(err, this.$router);
+            this.loading = false;
+          }
+        } else {
+          this.$notify({
+            message: "参数错误"
+          });
+          setTimeout(() => {
+            this.$router.replace("/cartIndex");
+          }, 1000);
+        }
+      },
+      async getDefaultAddress() {
+        try {
+          let res = await this.$axios.$post("/address/getDefaultAddress");
+          if (res.errorCode === 200) {
+            this.defaultAddress = res.data || [];
+          } else {
+            this.$notify({
+              message: res.errorMsg
+            });
+          }
+        } catch (err) {
+          handleError(err, this.$router);
+        }
+      },
+      onSubmit() {
+
+      },
       formatPrice(price) {
         return price.toFixed(2);
-      },
+      }
     }
   };
 </script>
@@ -129,6 +200,14 @@
   }
 
   .van-panel {
-    margin-top 14px
+    margin 12px 0
+    padding-bottom 10px
+  }
+
+  .order-footer {
+    margin-top 10px
+    text-align center
+    font-size 13px
+    color #969799
   }
 </style>
