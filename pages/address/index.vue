@@ -66,7 +66,6 @@
         });
       },
       editAddress(item) {
-        console.log(item);
         this.$router.push({
           path: "/address/deal",
           query: {

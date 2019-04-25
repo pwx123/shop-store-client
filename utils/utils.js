@@ -73,16 +73,19 @@ export function getDatePickerTime(num) {
  */
 export function handleError(err, router) {
   let errMsg = "系统错误";
-  if (err && err.response && err.response.status === 401) {
-    errMsg = err.response.data.errorMsg;
-    Notify({
-      message: errMsg,
-      duration: 1500
-    });
-    setTimeout(() => {
-      router.replace("/login");
-    }, 1000);
-    return false;
+  if (err && err.response && err.response.status) {
+    switch (err.response.status) {
+      case 301:
+        setTimeout(() => {
+          router.replace(err.response.data.data);
+        }, 1000);
+        break;
+      case 401:
+        setTimeout(() => {
+          router.replace('/login');
+        }, 1000);
+        break;
+    }
   }
   if (err && err.response && err.response.data.errorMsg) {
     errMsg = err.response.data.errorMsg;
@@ -94,8 +97,15 @@ export function handleError(err, router) {
 }
 
 export function handleServerError(err, error, redirect) {
-  if (err && err.response && err.response.status === 401) {
-    redirect("/login");
+  if (err && err.response && err.response.status) {
+    switch (err.response.status) {
+      case 301:
+        redirect(err.response.data.data);
+        break;
+      case 401:
+        redirect("/login");
+        break;
+    }
   } else {
     error({statusCode: 500, message: "服务器开小差了"});
   }

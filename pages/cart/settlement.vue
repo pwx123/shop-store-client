@@ -6,7 +6,7 @@
         left-arrow
         left-text="返回"
         title="提交订单"></van-nav-bar>
-    <nuxt-link to="/address" class="address" tag="div">
+    <nuxt-link class="address" tag="div" to="/address">
       <div class="address-detail">
         {{hasDefault ? addressInfo.name : "选择/添加收货地址"}}
       </div>
@@ -57,6 +57,7 @@
       return {
         remark: "",
         labelString: "",
+        settlemetIds: [],
         settlementList: [],
         defaultAddress: {},
         loading: true
@@ -95,6 +96,7 @@
         let isSettlement = localStorage.getItem("isSettlement");
         if (settlementList && Object.prototype.toString.apply(JSON.parse(settlementList)) === "[object Array]" && JSON.parse(settlementList).length) {
           let arr = JSON.parse(settlementList);
+          this.settlemetIds = arr;
           if (isSettlement && JSON.parse(isSettlement)) {
             this.getDefaultAddress();
           } else {
@@ -132,7 +134,7 @@
         try {
           let res = await this.$axios.$post("/address/getDefaultAddress");
           if (res.errorCode === 200) {
-            this.defaultAddress = res.data || [];
+            this.defaultAddress = res.data || {};
           } else {
             this.$notify({
               message: res.errorMsg
@@ -142,8 +144,30 @@
           handleError(err, this.$router);
         }
       },
-      onSubmit() {
+      async onSubmit() {
+        if (!this.defaultAddress || !this.defaultAddress.id) {
+          this.$notify({
+            message: "请选择收货地址"
+          });
+          return false;
+        }
+        try {
+          let params = {
+            deliveryAddressId: this.defaultAddress.id,
+            ids: this.settlemetIds.join(","),
+            remark: this.remark
+          };
+          let res = await this.$axios.$post("/order/createdOrder", params);
+          if (res.errorCode === 200) {
 
+          } else {
+            this.$notify({
+              message: res.errorMsg
+            });
+          }
+        } catch (err) {
+          handleError(err, this.$router);
+        }
       },
       formatPrice(price) {
         return price.toFixed(2);

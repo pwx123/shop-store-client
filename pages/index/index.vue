@@ -179,6 +179,7 @@
       },
       // 轮播图跳转
       linkSwipe(id) {
+        // TODO: 轮播图
         console.log(id);
       }
     },
