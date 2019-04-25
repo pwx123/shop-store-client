@@ -172,6 +172,7 @@
         } else {
           localStorage.setItem("settlementList", JSON.stringify(this.checkedGood));
           localStorage.setItem("isSettlement", 'true');
+          localStorage.removeItem('selectAddress');
           this.$router.push("/cart/settlement");
         }
       },

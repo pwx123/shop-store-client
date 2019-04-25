@@ -6,7 +6,7 @@
         left-arrow
         left-text="返回"
         title="提交订单"></van-nav-bar>
-    <nuxt-link class="address" tag="div" :to="'/address?id=' + (defaultAddress.id || '')">
+    <nuxt-link to="/address" class="address" tag="div">
       <div class="address-detail">
         {{hasDefault ? addressInfo.name : "选择/添加收货地址"}}
       </div>
@@ -99,7 +99,11 @@
             this.getDefaultAddress();
           } else {
             let selectAddress = localStorage.getItem("selectAddress");
-            this.defaultAddress = JSON.parse(selectAddress);
+            if (selectAddress) {
+              this.defaultAddress = JSON.parse(selectAddress) || {};
+            } else {
+              this.getDefaultAddress();
+            }
           }
           try {
             let res = await this.$axios.$post("/cart/getCartById", {ids: arr.join(",")});

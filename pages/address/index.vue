@@ -34,10 +34,6 @@
               defaultAddress = obj.id;
             }
           }
-          let id = route.query.id;
-          if (id) {
-            defaultAddress = parseInt(id);
-          }
           return {
             addressList: data,
             defaultAddress
@@ -49,16 +45,35 @@
         handleServerError(err, error, redirect);
       }
     },
+    mounted() {
+      let selectAddress = localStorage.getItem("selectAddress");
+      if (selectAddress) {
+        let address = JSON.parse(selectAddress);
+        this.defaultAddress = address.id;
+      }
+    },
     methods: {
       selectAddress(item, id) {
         localStorage.setItem("isSettlement", "false");
         localStorage.setItem("selectAddress", JSON.stringify(item));
       },
       addAddress() {
-
+        this.$router.push({
+          path: "/address/deal",
+          query: {
+            type: 0
+          }
+        });
       },
-      editAddress() {
-
+      editAddress(item) {
+        console.log(item);
+        this.$router.push({
+          path: "/address/deal",
+          query: {
+            type: 1,
+            id: item.id
+          }
+        });
       }
     }
   };
