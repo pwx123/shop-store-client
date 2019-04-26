@@ -123,6 +123,7 @@
       this.getCartList();
     },
     methods: {
+      // 获取购物车列表
       async getCartList() {
         try {
           let res = await this.$axios.$post("/cart/getUserCartList");
@@ -137,6 +138,27 @@
           }
         } catch (err) {
           this.loading = false;
+          handleError(err, this.$router);
+        }
+      },
+      // 更新购物车数量
+      updateCartCountThrottle(id, count) {
+        clearTimeout(this.timer);
+        this.timer = setTimeout(() => {
+          this.updateCartCount(id, count);
+        }, 500);
+      },
+      async updateCartCount(id, count) {
+        try {
+          let res = await this.$axios.$post("/cart/updateCartCount", {id, count});
+          if (res.errorCode === 200) {
+            this.getCartList();
+          } else {
+            this.$notify({
+              message: res.errorMsg
+            });
+          }
+        } catch (err) {
           handleError(err, this.$router);
         }
       },
@@ -171,8 +193,8 @@
           }
         } else {
           localStorage.setItem("settlementList", JSON.stringify(this.checkedGood));
-          localStorage.setItem("isSettlement", 'true');
-          localStorage.removeItem('selectAddress');
+          localStorage.setItem("isSettlement", "true");
+          localStorage.removeItem("selectAddress");
           this.$router.push("/cart/settlement");
         }
       },
@@ -193,6 +215,7 @@
         }
         count--;
         good.count = count;
+        this.updateCartCountThrottle(good.id, count);
       },
       addCount(good, count) {
         if (!count && count !== 0) {
@@ -202,15 +225,16 @@
           });
           return;
         }
-        if (count >= good.stock) {
+        if (count >= 10) {
           Toast({
             position: "bottom",
-            message: "只有这么多了~"
+            message: "限购10本~"
           });
           return;
         }
         count++;
         good.count = count;
+        this.updateCartCountThrottle(good.id, count);
       },
       reduceEditCount() {
         if (!this.editNum && this.editNum !== 0) {
@@ -237,10 +261,10 @@
           });
           return;
         }
-        if (this.editNum >= this.editGood.stock) {
+        if (this.editNum >= 10) {
           Toast({
             position: "bottom",
-            message: "只有这么多了~"
+            message: "限购10本~"
           });
           return;
         }
@@ -264,10 +288,10 @@
             done(false);
             return;
           }
-          if (this.editNum > this.editGood.stock) {
+          if (this.editNum >= 10) {
             Toast({
               position: "bottom",
-              message: "库存不够了~"
+              message: "限购10本"
             });
             done(false);
             return;
@@ -281,6 +305,7 @@
             return;
           }
           this.editGood.count = this.editNum;
+          this.updateCartCountThrottle(this.editGood.id, this.editNum);
           done();
         } else {
           done();

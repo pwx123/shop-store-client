@@ -57,10 +57,11 @@
       return {
         remark: "",
         labelString: "",
-        settlemetIds: [],
+        settlementIds: [],
         settlementList: [],
         defaultAddress: {},
-        loading: true
+        loading: true,
+        isBuyNow: this.$route.query.type == 1
       };
     },
     computed: {
@@ -96,7 +97,7 @@
         let isSettlement = localStorage.getItem("isSettlement");
         if (settlementList && Object.prototype.toString.apply(JSON.parse(settlementList)) === "[object Array]" && JSON.parse(settlementList).length) {
           let arr = JSON.parse(settlementList);
-          this.settlemetIds = arr;
+          this.settlementIds = arr;
           if (isSettlement && JSON.parse(isSettlement)) {
             this.getDefaultAddress();
           } else {
@@ -108,10 +109,22 @@
             }
           }
           try {
-            let res = await this.$axios.$post("/cart/getCartById", {ids: arr.join(",")});
+            let url = "/cart/getCartById";
+            let params = {ids: arr.join(",")};
+            if (this.isBuyNow) {
+              url = "book/getBookInfoById";
+              params = {id: arr[0]};
+            }
+            let res = await this.$axios.$post(url, params);
             this.loading = false;
             if (res.errorCode === 200) {
-              this.settlementList = res.data;
+              let data = res.data;
+              if (this.isBuyNow) {
+                data.count = parseInt(this.$route.query.count);
+                this.settlementList = [data];
+              } else {
+                this.settlementList = res.data;
+              }
             } else {
               this.$notify({
                 message: res.errorMsg
@@ -130,6 +143,7 @@
           }, 1000);
         }
       },
+      // 获取默认地址
       async getDefaultAddress() {
         try {
           let res = await this.$axios.$post("/address/getDefaultAddress");
@@ -144,6 +158,7 @@
           handleError(err, this.$router);
         }
       },
+      // 提交订单
       async onSubmit() {
         if (!this.defaultAddress || !this.defaultAddress.id) {
           this.$notify({
@@ -154,12 +169,26 @@
         try {
           let params = {
             deliveryAddressId: this.defaultAddress.id,
-            ids: this.settlemetIds.join(","),
-            remark: this.remark
+            ids: this.settlementIds.join(","),
+            remark: this.remark,
+            type: this.$route.query.type,
+            count: this.$route.query.count
           };
           let res = await this.$axios.$post("/order/createdOrder", params);
           if (res.errorCode === 200) {
-
+            this.$notify({
+              message: "订单创建成功",
+              duration: 500,
+              background: "#1989fa"
+            });
+            setTimeout(() => {
+              this.$router.push({
+                path: "/safe/validPayPwd",
+                query: {
+                  orderId: res.data.orderId
+                }
+              });
+            }, 500);
           } else {
             this.$notify({
               message: res.errorMsg
@@ -171,6 +200,16 @@
       },
       formatPrice(price) {
         return price.toFixed(2);
+      }
+    },
+    beforeRouteEnter(to, from, next) {
+      if (from.path === "/safe/validPayPwd") {
+        next({
+          replace: true,
+          path: "/cartIndex"
+        });
+      } else {
+        next();
       }
     }
   };

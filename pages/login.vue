@@ -104,7 +104,7 @@
       forgetPwd() {
         this.$dialog.alert({
           title: "提示",
-          message: "请联系客服QQ 1813536955 重置密码"
+          message: "请联系客服 QQ 1813536955 重置密码"
         });
       },
       goRegister() {

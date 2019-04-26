@@ -25,15 +25,12 @@
       <van-cell-group class="cell-detail">
         <van-cell class="good-count" title="数量">
           <van-stepper
-              :max="goodDetail.stock"
+              :max="10"
               :min="1"
               input-width="60px"
               integer
               v-model="count"
           />
-        </van-cell>
-        <van-cell title="库存">
-          {{goodDetail.stock}}
         </van-cell>
       </van-cell-group>
 
@@ -111,7 +108,16 @@
     computed: {},
     methods: {
       bugNowClick() {
-
+        localStorage.setItem("settlementList", JSON.stringify([this.goodDetail.id]));
+        localStorage.setItem("isSettlement", "true");
+        localStorage.removeItem("selectAddress");
+        this.$router.push({
+          path: '/cart/settlement',
+          query: {
+            type: 1,
+            count: this.count
+          }
+        });
       },
       async addCartClick() {
         let params = {
@@ -122,7 +128,7 @@
           let res = await this.$axios.$post("/cart/addCart", params);
           if (res.errorCode === 200) {
             this.$notify({
-              message: '添加成功',
+              message: "添加成功",
               background: "#1989fa"
             });
           } else {
@@ -131,7 +137,7 @@
             });
           }
         } catch (err) {
-          handleError
+          handleError;
         }
       },
       scrollToDetail() {
