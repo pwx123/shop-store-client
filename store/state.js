@@ -1,2 +1,4 @@
-const state = () => ({});
+const state = () => ({
+  userInfo: {}
+});
 export default state;

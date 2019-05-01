@@ -53,15 +53,14 @@
 
 <script>
   import {handleServerError} from "../../utils/utils";
+  import {mapGetters} from "vuex";
 
   export default {
-    async asyncData({$axios, error, redirect, query}) {
+    async fetch({$axios, error, redirect, store}) {
       try {
         let res = await $axios.$post("/user/getUserInfo");
         if (res.errorCode === 200) {
-          return {
-            userInfo: res.data || {}
-          };
+          store.commit("SET_USERINFO", res.data);
         } else {
           handleServerError("", error, redirect);
         }
@@ -73,6 +72,9 @@
       return {
         defaultAvatarUrl: this.baseUrl + "/images/admin/default.jpg"
       };
+    },
+    computed:{
+      ...mapGetters(['userInfo'])
     },
     methods: {}
   };
