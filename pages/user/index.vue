@@ -7,7 +7,9 @@
         left-text="返回"
         title="个人信息"></van-nav-bar>
     <van-cell-group>
-      <van-cell is-link title="头像" value="内容"/>
+      <van-cell is-link title="头像" value="内容">
+        <img :src="userInfo.avatarUrl || defaultAvatarUrl" alt="">
+      </van-cell>
       <van-cell :value="sexMap[userInfo.sex]" is-link title="性别"/>
       <van-cell :value="userInfo.name" title="手机号"/>
       <van-cell :value="userInfo.nickname" is-link title="姓名"/>
@@ -39,6 +41,7 @@
     },
     data() {
       return {
+        defaultAvatarUrl: this.baseUrl + "/images/admin/default.jpg",
         sexMap: {
           0: "男",
           1: "女"
@@ -78,6 +81,16 @@
     padding-top 46px
     min-height 100vh
     background-color #fafafa
+  }
+
+  .van-cell {
+    align-items center
+  }
+
+  .van-cell__value {
+    img {
+      width 30px
+    }
   }
 
   .logout {

@@ -1,52 +1,82 @@
 <template>
-  <div class="order">
-    <van-nav-bar :title="titleMap[status]"
-        :z-index="10"
+  <div class="order-detail">
+    <van-nav-bar :z-index="10"
         @click-left="$router.go(-1)"
         fixed
         left-arrow
-        left-text="返回"></van-nav-bar>
-    <div class="order-list">
-      <van-panel :key="item.id" v-for="item in orderList">
-        <div class="order-header" slot="header">
+        left-text="返回"
+        title="订单详情"></van-nav-bar>
+    <van-panel>
+      <div class="order-header" slot="header">
           <span
-              :style="'color: ' + (statusMap[item.status] ? statusMap[item.status].color : '') ">{{statusMap[item.status] ? statusMap[item.status].val : "--"}}</span>
-          <span @click="showOrderDetail(item.id)" style="color: #20a1ff">订单详情 &gt;</span>
+              :style="'color: ' + (statusMap[orderDetail.status] ? statusMap[orderDetail.status].color : '') ">{{statusMap[orderDetail.status] ? statusMap[orderDetail.status].val : "--"}}</span>
+      </div>
+      <van-card
+          :key="order.bookId"
+          :num="order.bookNum"
+          :origin-price="formatPrice(order.bookPrice)"
+          :price="formatPrice(order.bookSalePrice)"
+          :thumb="order.bookImageUrl"
+          :title="order.bookName"
+          v-for="order in orderDetail.orders">
+        <div class="desc" slot="desc">
+          {{order.bookTitle.length > 32 ? order.bookTitle.slice(0,32) + "..." : order.bookTitle}}
         </div>
-        <van-card
-            :key="order.bookId"
-            :num="order.bookNum"
-            :origin-price="formatPrice(order.bookPrice)"
-            :price="formatPrice(order.bookSalePrice)"
-            :thumb="order.bookImageUrl"
-            :title="order.bookName"
-            v-for="order in item.orders">
-          <div class="desc" slot="desc">
-            {{order.bookTitle.length > 32 ? order.bookTitle.slice(0,32) + "..." : order.bookTitle}}
-          </div>
-        </van-card>
-        <div class="order-footer" slot="footer">
-          <van-button @click="payStatusClick(item)"
-              size="small"
-              v-if="payStatusFun(item.status)">去支付
-          </van-button>
-          <van-button @click="deliveryStatusClick(item)"
-              size="small"
-              v-if="deliveryStatusFun(item.status)">查看物流
-          </van-button>
-          <van-button @click="refundStatusClick(item)"
-              size="small"
-              v-if="refundStatusFun(item.status)">我要退款
-          </van-button>
-          <van-button @click="submitStatusClick(item)"
-              size="small"
-              v-if="submitStatusFun(item.status)">确认收货
-          </van-button>
-        </div>
-      </van-panel>
-      <div class="bottom-tips" v-if="showBottomTips">到底了~</div>
+      </van-card>
+      <div class="order-footer" slot="footer">
+        <van-button @click="payStatusClick(orderDetail)"
+            size="small"
+            v-if="payStatusFun(orderDetail.status)">去支付
+        </van-button>
+        <van-button @click="deliveryStatusClick(orderDetail)"
+            size="small"
+            v-if="deliveryStatusFun(orderDetail.status)">查看物流
+        </van-button>
+        <van-button @click="refundStatusClick(orderDetail)"
+            size="small"
+            v-if="refundStatusFun(orderDetail.status)">我要退款
+        </van-button>
+        <van-button @click="submitStatusClick(orderDetail)"
+            size="small"
+            v-if="submitStatusFun(orderDetail.status)">确认收货
+        </van-button>
+      </div>
+    </van-panel>
+    <div class="price">
+      <p>
+        <span>商品总价</span>
+        <span>{{orderDetail.orderMoney | money}}</span>
+      </p>
+      <p>
+        <span>运费</span>
+        <span>{{orderDetail.deliveryMoney | money}}</span>
+      </p>
+      <p>
+        <span>订单总价</span>
+        <span>{{orderDetail.totalMoney | money}}</span>
+      </p>
     </div>
-    <loading :loading="loading"></loading>
+    <div class="order-info">
+      <p class="title">订单信息</p>
+      <div class="info">
+        <p class="line">
+          <span>订单号:</span>
+          <span>{{orderDetail.orderId || "--"}}</span>
+        </p>
+        <p class="line">
+          <span>创建时间:</span>
+          <span>{{orderDetail.createdAt || "--"}}</span>
+        </p>
+        <p class="line">
+          <span>付款时间:</span>
+          <span>{{orderDetail.dealAt || "--"}}</span>
+        </p>
+        <p class="line">
+          <span>发货时间:</span>
+          <span>{{orderDetail.deliveryAt || "--"}}</span>
+        </p>
+      </div>
+    </div>
     <van-dialog
         :before-close="dialogBeforeClose"
         @cancel="showDialog = false"
@@ -81,29 +111,37 @@
 </template>
 
 <script>
-  import {handleError} from "../../utils/utils";
-  import Loading from "../../components/loading";
+  import {handleServerError, handleError} from "../../utils/utils";
 
   export default {
-    components: {Loading},
+    async asyncData({$axios, error, redirect, query}) {
+      try {
+        if (!query.id) {
+          redirect("/");
+        }
+        let res = await $axios.$post("/order/getOrderDetailById", {id: query.id});
+        if (res.errorCode === 200) {
+          return {
+            orderDetail: res.data || {}
+          };
+        } else {
+          handleServerError("", error, redirect);
+        }
+      } catch (err) {
+        handleServerError(err, error, redirect);
+      }
+    },
     data() {
       return {
-        titleMap: {
-          "all": "全部订单",
-          "0": "待付款订单",
-          "1": "待接单订单",
-          "2": "待发货订单",
-          "3": "已发货订单",
-          "4": "待收货订单"
-        },
-        status: this.$route.query.type || "all",
-        queryParams: {
-          pageNumber: 1,
-          pageSize: 6
-        },
-        orderList: [],
-        // 退款id
+        remark: "",
         refundId: "",
+        payStatus: [0],
+        deliveryStatus: [3, 4],
+        refundStatus: [1, 2, 3, 4, 5],
+        submitStatus: [3, 4],
+        total: 0,
+        showDeliveryDialog: false,
+        deliveryInfo: [],
         dialogErr: "",
         showDialog: false,
         statusAll: [
@@ -163,16 +201,6 @@
             color: "#909399"
           }
         ],
-        loading: true,
-        remark: "",
-        payStatus: [0],
-        deliveryStatus: [3, 4],
-        refundStatus: [1, 2, 3, 4, 5],
-        submitStatus: [3, 4],
-        total: 0,
-        showBottomTips: false,
-        showDeliveryDialog: false,
-        deliveryInfo: [],
       };
     },
     computed: {
@@ -186,43 +214,7 @@
         return obj;
       },
     },
-    mounted() {
-      this.getOrderList();
-      window.addEventListener("scroll", this.handleScroll);
-    },
     methods: {
-      async getOrderList() {
-        try {
-          this.queryParams.status = this.status === "all" ? "" : this.status;
-          this.showBottomTips = false;
-          let res = await this.$axios.$post("/order/getOrderList", this.queryParams);
-          this.loading = false;
-          if (res.errorCode === 200) {
-            this.total = res.data.total;
-            if (this.queryParams.pageNumber === 1) {
-              this.orderList = res.data.rows;
-            } else {
-              this.orderList = this.orderList.concat(res.data.rows);
-            }
-          } else {
-            this.$notify({
-              message: res.errorMsg
-            });
-          }
-        } catch (err) {
-          handleError(err, this.$router);
-          this.loading = false;
-        }
-      },
-      // 展示订单详情
-      showOrderDetail(id) {
-        this.$router.push({
-          path: "/order/detail",
-          query: {
-            id
-          }
-        });
-      },
       // 去支付
       payStatusClick(item) {
         this.$router.push({
@@ -319,63 +311,76 @@
       submitStatusFun(status) {
         return this.submitStatus.indexOf(status) !== -1;
       },
-      handleScroll() {
-        if ((document.documentElement.scrollTop + window.innerHeight + 10) >= document.body.offsetHeight) {
-          if (this.queryParams.pageSize * this.queryParams.pageNumber >= this.total) {
-            this.showBottomTips = true;
-            return false;
-          } else {
-            this.queryParams.pageNumber++;
-            this.getOrderList();
-          }
-        }
-      },
       formatPrice(price) {
         return price.toFixed(2);
       }
     }
   };
 </script>
-
 <style lang="stylus" scoped>
-  .order {
-    padding 50px 10px 10px 10px
+  .order-detail {
+    padding-top 46px
+    background-color #eee
     min-height 100vh
-    background-color #fafafa
   }
 
-  .van-panel {
-    margin-bottom 16px
+  .order-header {
+    display flex
+    justify-content space-between
+    padding 10px 16px
+    font-size 14px
+    border-bottom 1px solid #eee
+  }
 
-    .van-card {
-      background-color #fff
-    }
+  .order-footer {
+    text-align right
+  }
 
-    .order-header {
+  .price {
+    p {
       display flex
       justify-content space-between
-      padding 10px 16px
+      background-color #fff
+      padding 6px 10px
       font-size 14px
-      border-bottom 1px solid #eee
+
+      span:first-child {
+        color #666
+      }
+
+      span:last-child {
+        color #f44
+      }
+    }
+  }
+
+  .order-info {
+    margin-top 6px
+    padding 10px
+    background-color #fff
+
+    .title {
+      font-size 14px
+      padding-left 10px
+      color #666
+      border-left 2px solid #f44
     }
 
-    .order-footer {
-      text-align right
+    .info {
+      margin-top 10px
     }
-  }
 
-  .van-cell-group {
-    margin-top 10px
-  }
+    .line {
+      display flex
+      justify-content space-between
+      background-color #fff
+      padding 6px 10px
+      font-size 14px
 
-  .bottom-tips {
-    text-align center
-    color #666
-    font-size 14px
-  }
-
-  .van-steps {
-    max-height 300px
-    overflow scroll
+      span:first-child {
+        max-width 200px
+        color #666
+      }
+    }
   }
 </style>
