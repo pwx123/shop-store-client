@@ -173,6 +173,7 @@
         showBottomTips: false,
         showDeliveryDialog: false,
         deliveryInfo: [],
+        loadingData: false
       };
     },
     computed: {
@@ -184,7 +185,7 @@
           obj[this.statusAll[i].value].color = this.statusAll[i].color;
         }
         return obj;
-      },
+      }
     },
     mounted() {
       this.getOrderList();
@@ -193,10 +194,12 @@
     methods: {
       async getOrderList() {
         try {
+          this.loadingData = true;
           this.queryParams.status = this.status === "all" ? "" : this.status;
           this.showBottomTips = false;
           let res = await this.$axios.$post("/order/getOrderList", this.queryParams);
           this.loading = false;
+          this.loadingData = false;
           if (res.errorCode === 200) {
             this.total = res.data.total;
             if (this.queryParams.pageNumber === 1) {
@@ -212,6 +215,7 @@
         } catch (err) {
           handleError(err, this.$router);
           this.loading = false;
+          this.loadingData = false;
         }
       },
       // 展示订单详情
@@ -324,7 +328,7 @@
           if (this.queryParams.pageSize * this.queryParams.pageNumber >= this.total) {
             this.showBottomTips = true;
             return false;
-          } else {
+          } else if (!this.loadingData) {
             this.queryParams.pageNumber++;
             this.getOrderList();
           }

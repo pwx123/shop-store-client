@@ -2,7 +2,7 @@
   <div class="user">
     <nuxt-link class="user-info" tag="div" to="/user">
       <div class="avatar">
-        <img :src="userInfo.avatarUrl || defaultAvatarUrl" alt="">
+        <img :src="userInfo.avatarUrl + getTimeUrl() || defaultAvatarUrl" alt="">
       </div>
       <div class="title">
         <p>欢迎</p>
@@ -37,6 +37,10 @@
           is-link
           title="全部订单"
           to="/order"/>
+      <van-cell icon="apps-o"
+          is-link
+          title="收货地址管理"
+          to="/address/list"/>
       <van-cell icon="cash-on-deliver"
           is-link
           title="安全设置"
@@ -57,15 +61,17 @@
 
   export default {
     async fetch({$axios, error, redirect, store}) {
-      try {
-        let res = await $axios.$post("/user/getUserInfo");
-        if (res.errorCode === 200) {
-          store.commit("SET_USERINFO", res.data);
-        } else {
-          handleServerError("", error, redirect);
+      if (!store.getters.userInfo.name) {
+        try {
+          let res = await $axios.$post("/user/getUserInfo");
+          if (res.errorCode === 200) {
+            store.commit("SET_USERINFO", res.data);
+          } else {
+            handleServerError("", error, redirect);
+          }
+        } catch (err) {
+          handleServerError(err, error, redirect);
         }
-      } catch (err) {
-        handleServerError(err, error, redirect);
       }
     },
     data() {
@@ -73,10 +79,15 @@
         defaultAvatarUrl: this.baseUrl + "/images/admin/default.jpg"
       };
     },
-    computed:{
-      ...mapGetters(['userInfo'])
+    computed: {
+      ...mapGetters(["userInfo"])
     },
-    methods: {}
+    methods: {
+      // url加上时间参数
+      getTimeUrl() {
+        return `?t=${new Date().getTime()}`;
+      }
+    }
   };
 </script>
 

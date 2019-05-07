@@ -137,7 +137,7 @@
             });
           }
         } catch (err) {
-          handleError;
+          handleError(err, this.$router);
         }
       },
       scrollToDetail() {
