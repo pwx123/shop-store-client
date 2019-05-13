@@ -215,6 +215,20 @@
       },
     },
     methods: {
+      async getOrderDetail(){
+        try {
+          let res = await this.$axios.$post("/order/getOrderDetailById", {id: this.$route.query.id});
+          if (res.errorCode === 200) {
+            this.orderDetail = res.data;
+          } else {
+            this.$notify({
+              message: res.errorMsg
+            });
+          }
+        } catch (err) {
+          handleError(err, this.$router);
+        }
+      },
       // 去支付
       payStatusClick(item) {
         this.$router.push({
@@ -248,8 +262,7 @@
             remark: this.remark
           });
           if (res.errorCode === 200) {
-            this.queryParams.pageNumber = 1;
-            this.getOrderList();
+            this.getOrderDetail();
           } else {
             this.$notify({
               message: res.errorMsg
@@ -288,8 +301,7 @@
               message: "确认收货成功",
               background: "#1989fa"
             });
-            this.queryParams.pageNumber = 1;
-            this.getOrderList();
+            this.getOrderDetail();
           } else {
             this.$notify({
               message: res.errorMsg
