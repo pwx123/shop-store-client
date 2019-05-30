@@ -45,8 +45,8 @@
     data() {
       return {
         loginParams: {
-          name: "",
-          pwd: ""
+          name: "15553598112",
+          pwd: "pwx98010101"
         },
         loginValidate: {
           name: "",

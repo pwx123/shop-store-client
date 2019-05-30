@@ -8,7 +8,7 @@
         title="个人信息"></van-nav-bar>
     <van-cell-group>
       <van-cell is-link title="头像" value="内容">
-        <img :src="userInfo.avatarUrl + getTimeUrl() || defaultAvatarUrl" alt="">
+        <img :src="userInfo.avatarUrl ? userInfo.avatarUrl + getTimeUrl() : defaultAvatarUrl" alt="">
         <input @change="inputFileChange"
             accept="image/*"
             class="file"
@@ -239,6 +239,7 @@
       top 0
       bottom 0
       width 100vh
+      z-index 999
     }
   }
 

@@ -15,7 +15,7 @@
           v-model="loginParams.name"/>
       <van-field :error-message="loginValidate.pwd"
           clearable
-          placeholder="请输入密码"
+          placeholder="8-16位数字和字母组合"
           size="large"
           type="password"
           v-model="loginParams.pwd"/>

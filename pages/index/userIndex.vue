@@ -2,7 +2,7 @@
   <div class="user">
     <nuxt-link class="user-info" tag="div" to="/user">
       <div class="avatar">
-        <img :src="userInfo.avatarUrl + getTimeUrl() || defaultAvatarUrl" alt="">
+        <img :src="userInfo.avatarUrl ? userInfo.avatarUrl + getTimeUrl() : defaultAvatarUrl" alt="">
       </div>
       <div class="title">
         <p>欢迎</p>
