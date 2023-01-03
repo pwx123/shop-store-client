@@ -15,7 +15,7 @@
     "cross-env": "^5.2.0",
     "crypto-js": "^3.1.9-1",
     "jsencrypt": "^3.0.0-rc.1",
-    "nuxt": "^2.4.0",
+    "nuxt": "^2.15.8",
     "stylus": "^0.54.5",
     "stylus-loader": "^3.0.2",
     "vant": "^1.6.14"
